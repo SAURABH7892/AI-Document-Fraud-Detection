@@ -1,0 +1,72 @@
+{
+  "model_name": "DocShield-RandomForest-Classifier",
+  "version": "1.0.0",
+  "algorithm": "RandomForestClassifier",
+  "parameters": {
+    "n_estimators": 100,
+    "max_depth": 8,
+    "random_state": 42
+  },
+  "dataset_split": {
+    "train": 140,
+    "val": 28,
+    "test": 32
+  },
+  "metrics": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "roc_auc": 1.0,
+    "confusion_matrix": [
+      [
+        16,
+        0
+      ],
+      [
+        0,
+        16
+      ]
+    ]
+  },
+  "feature_importances": {
+    "ocr_confidence_avg": 0.0092,
+    "ocr_word_count": 0.0,
+    "ocr_char_density": 0.0,
+    "ela_mean_error": 0.12,
+    "ela_std_error": 0.09,
+    "ela_max_error": 0.0913,
+    "ela_cluster_count": 0.1,
+    "noise_median_var": 0.0065,
+    "noise_iqr_var": 0.13,
+    "noise_inconsistency_index": 0.1369,
+    "layout_height_variance": 0.17,
+    "layout_slope_variance": 0.11,
+    "edge_density": 0.0,
+    "meta_suspicious_producer": 0.0048,
+    "meta_timestamp_anomaly": 0.0,
+    "extracted_field_count": 0.0027,
+    "field_confidence_avg": 0.0287,
+    "is_pdf": 0.0
+  },
+  "feature_schema": [
+    "ocr_confidence_avg",
+    "ocr_word_count",
+    "ocr_char_density",
+    "ela_mean_error",
+    "ela_std_error",
+    "ela_max_error",
+    "ela_cluster_count",
+    "noise_median_var",
+    "noise_iqr_var",
+    "noise_inconsistency_index",
+    "layout_height_variance",
+    "layout_slope_variance",
+    "edge_density",
+    "meta_suspicious_producer",
+    "meta_timestamp_anomaly",
+    "extracted_field_count",
+    "field_confidence_avg",
+    "is_pdf"
+  ]
+}
