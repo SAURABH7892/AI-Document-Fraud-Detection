@@ -64,27 +64,6 @@ export interface VerificationDetail {
   forensics: ForensicFinding[];
   ml_prediction: ModelPrediction | null;
   report_id: string | null;
-  issuer_metadata?: {
-    is_gov_id: boolean;
-    id_type: string;
-    id_type_label: string;
-    id_number_masked: string;
-    id_number_raw?: string;
-    authority: string;
-    checksum_valid: boolean;
-    checksum_details: string;
-    issuer_status: string;
-    verification_mode: string;
-    demographic_match?: {
-      name_match_score: number;
-      name_evaluated?: string;
-      details: string;
-    };
-    transaction_id: string;
-    timestamp: string;
-    status_text: string;
-    recommendation: string;
-  } | null;
 }
 
 export interface DashboardStats {

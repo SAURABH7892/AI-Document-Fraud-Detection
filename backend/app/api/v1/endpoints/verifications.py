@@ -76,8 +76,7 @@ def get_verification_by_document(
         fields=[DocumentFieldResponse.model_validate(f) for f in fields],
         forensics=[ForensicFindingResponse.model_validate(f) for f in forensics],
         ml_prediction=ModelPredictionResponse.model_validate(ml_pred) if ml_pred else None,
-        report_id=report.id if report else None,
-        issuer_metadata=getattr(verif, 'issuer_metadata', None)
+        report_id=report.id if report else None
     )
 
 @router.get("/{verification_id}", response_model=VerificationDetailResponse)

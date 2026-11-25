@@ -9,17 +9,15 @@ from backend.app.core.config import settings
 from backend.app.storage import get_storage
 from backend.app.models.entities import (
     Document, VerificationJob, OCRResult, DocumentField,
-    ForensicResult, ModelPrediction, VerificationResult, Report, AuditLog,
-    VerificationSource
+    ForensicResult, ModelPrediction, VerificationResult, Report, AuditLog
 )
 from ai.preprocessing.pdf_converter import DocumentPreprocessor
 from ai.ocr.engine import StandardOCREngine
 from ai.field_extraction.academic_extractor import AcademicFieldExtractor
-from ai.forensics.analyzer import DocumentForensicsAnalyzer, ForensicFinding
+from ai.forensics.analyzer import DocumentForensicsAnalyzer
 from ai.features.schema import build_feature_dict
 from ai.inference.service import MLInferenceService
 from ai.risk_engine.engine import RiskEngine
-from backend.app.services.digilocker_service import DigiLockerService
 from reports.generator import VerificationReportGenerator
 
 logger = logging.getLogger(__name__)
@@ -173,39 +171,9 @@ class VerificationService:
             )
             db.add(db_ml)
 
-            # 7. DigiLocker Government ID & Issuer Verification
-            job.current_stage = "ISSUER_VERIFICATION"
-            job.progress_percent = 84
-            db.commit()
-
-            combined_ocr_text = "\n".join([p.text for p in ocr_page_results])
-            digilocker_res = DigiLockerService.detect_and_verify(
-                text_content=combined_ocr_text,
-                extracted_fields=extracted_fields
-            )
-
-            # Integrate DigiLocker findings into forensic assessment
-            if digilocker_res.get("is_gov_id"):
-                if digilocker_res.get("issuer_status") == "FAILED_CHECKSUM":
-                    findings.append(ForensicFinding(
-                        feature_name="gov_id_checksum_failure",
-                        measured_value=1.0,
-                        threshold=0.5,
-                        severity="HIGH",
-                        explanation=f"DigiLocker Checksum Failed: {digilocker_res.get('checksum_details')}"
-                    ))
-                elif digilocker_res.get("issuer_status") == "DEMOGRAPHIC_MISMATCH":
-                    findings.append(ForensicFinding(
-                        feature_name="gov_id_demographic_mismatch",
-                        measured_value=1.0,
-                        threshold=0.5,
-                        severity="HIGH",
-                        explanation=f"DigiLocker Demographic Mismatch: {digilocker_res.get('demographic_match', {}).get('details')}"
-                    ))
-
-            # 8. Risk Engine Scoring
+            # 7. Risk Engine Scoring
             job.current_stage = "RISK_AGGREGATION"
-            job.progress_percent = 90
+            job.progress_percent = 88
             db.commit()
 
             ocr_conf = float(ocr_page_results[0].confidence_avg) if ocr_page_results else 0.0
@@ -214,24 +182,8 @@ class VerificationService:
                 ocr_confidence_avg=ocr_conf,
                 extracted_fields=extracted_fields,
                 ml_prediction=ml_prediction,
-                issuer_configured=settings.DIGILOCKER_ENABLED or digilocker_res.get("is_gov_id", False)
+                issuer_configured=settings.DIGILOCKER_ENABLED
             )
-
-            # If Government ID verified authentic by DigiLocker, append positive issuer assurance
-            if digilocker_res.get("is_gov_id") and digilocker_res.get("issuer_status") == "VERIFIED_AUTHENTIC":
-                assessment.summary_evidence.insert(0, {
-                    "signal": "digilocker_issuer_verification",
-                    "category": "COUNTERFEITING",
-                    "severity": "INFO",
-                    "impact": "Verified",
-                    "finding": digilocker_res.get("status_text")
-                })
-                # Cap risk score lower for verified government documents
-                assessment.risk_score = max(0.0, min(15.0, assessment.risk_score))
-                assessment.risk_level = "LOW_RISK"
-                assessment.recommendation = f"Authentic {digilocker_res.get('id_type_label')} confirmed via DigiLocker. Full demographic and algorithmic correlation."
-
-            final_issuer_status = digilocker_res.get("status_text") if digilocker_res.get("is_gov_id") else assessment.issuer_verification_status
 
             import uuid as _uuid
             verif_id = str(_uuid.uuid4())
@@ -244,33 +196,14 @@ class VerificationService:
                 risk_level=assessment.risk_level,
                 risk_score=assessment.risk_score,
                 summary_evidence=assessment.summary_evidence,
-                issuer_verification_status=final_issuer_status,
-                issuer_metadata=digilocker_res,
+                issuer_verification_status=assessment.issuer_verification_status,
                 recommendation=assessment.recommendation
             )
             db.add(db_verif)
 
-            # Update or create VerificationSource record
-            try:
-                v_source = db.query(VerificationSource).filter(VerificationSource.source_name == "DigiLocker / National ID Gateway").first()
-                if not v_source:
-                    v_source = VerificationSource(
-                        source_name="DigiLocker / National ID Gateway",
-                        is_available=True,
-                        status_details=final_issuer_status,
-                        last_checked_at=datetime.utcnow()
-                    )
-                    db.add(v_source)
-                else:
-                    v_source.is_available = True
-                    v_source.status_details = final_issuer_status
-                    v_source.last_checked_at = datetime.utcnow()
-            except Exception:
-                pass
-
-            # 9. Report Generation
+            # 8. Report Generation
             job.current_stage = "REPORT_GENERATION"
-            job.progress_percent = 96
+            job.progress_percent = 95
 
             reports_rel_path = f"reports/docshield_report_{document_id}.pdf"
             reports_abs_path = os.path.join(settings.STORAGE_LOCAL_PATH, reports_rel_path)
@@ -288,17 +221,13 @@ class VerificationService:
             ]
             forensic_dicts = [f.to_dict() for f in findings]
 
-            assessment_dict = assessment.to_dict()
-            assessment_dict["issuer_verification_status"] = final_issuer_status
-
             VerificationReportGenerator.generate(
                 output_path=reports_abs_path,
                 document_info=doc_info,
-                verification_result=assessment_dict,
+                verification_result=assessment.to_dict(),
                 extracted_fields=fields_list,
                 forensic_findings=forensic_dicts,
-                ml_prediction=ml_prediction,
-                issuer_metadata=digilocker_res
+                ml_prediction=ml_prediction
             )
 
             report_size = os.path.getsize(reports_abs_path) if os.path.exists(reports_abs_path) else 0

@@ -92,17 +92,10 @@ export default function UploadPage() {
         <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center mx-auto mb-3 border border-sky-100">
           <UploadCloud className="w-5 h-5" />
         </div>
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Upload Document for Verification</h1>
+        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Upload Academic Document</h1>
         <p className="text-xs text-slate-500 mt-1">
-          Upload Academic Degrees, Marksheets, or Government IDs (Aadhaar, PAN, Driving License, Passport)
+          Upload degrees, transcripts, or mark sheets (PDF, JPG, PNG) for forensic analysis
         </p>
-        <div className="mt-3 flex flex-wrap justify-center gap-1.5 text-[10px] font-semibold text-slate-600">
-          <span className="bg-sky-50 text-sky-700 px-2 py-0.5 rounded border border-sky-100">Academic Certificates</span>
-          <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-100">UIDAI Aadhaar (Verhoeff D5)</span>
-          <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-100">PAN Card (ITD)</span>
-          <span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-100">Driving License (MoRTH)</span>
-          <span className="bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-100">DigiLocker Verified</span>
-        </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">

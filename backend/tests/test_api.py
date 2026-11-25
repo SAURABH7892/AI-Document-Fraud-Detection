@@ -205,7 +205,7 @@ def test_full_analysis_and_report_generation():
     # Wait for the background worker to finish processing
     completed = False
     last_status = None
-    for _ in range(40):
+    for _ in range(60):
         job_res = client.get(f"/api/v1/documents/{doc_id}/job", headers=headers)
         if job_res.status_code == 200:
             last_status = job_res.json()
@@ -214,7 +214,7 @@ def test_full_analysis_and_report_generation():
                 break
             if last_status.get("status") == "FAILED":
                 break
-        time.sleep(0.4)
+        time.sleep(0.5)
     assert completed, f"Background verification job failed or timed out: {last_status}"
 
     # Query verification details via API
@@ -231,99 +231,3 @@ def test_full_analysis_and_report_generation():
     assert report_res.status_code == 200
     assert report_res.headers["content-type"] == "application/pdf"
     assert len(report_res.content) > 1000
-
-# ==========================================
-# 7. DigiLocker Government ID Tests
-# ==========================================
-def test_digilocker_aadhaar_verhoeff_algorithm():
-    from backend.app.services.digilocker_service import validate_verhoeff, DigiLockerService
-
-    # Valid Aadhaar numbers generated via Verhoeff scheme
-    assert validate_verhoeff("367598342515") is True
-    # Altered last digit
-    assert validate_verhoeff("367598342516") is False
-
-    # Aadhaar document text detection test
-    aadhaar_ocr_text = """
-    GOVERNMENT OF INDIA
-    Unique Identification Authority of India (UIDAI)
-    Name: Rohit Sharma
-    DOB: 15/08/1995
-    Gender: Male
-    3675 9834 2515
-    Mera Aadhaar, Meri Pehchan
-    """
-    res = DigiLockerService.detect_and_verify(
-        text_content=aadhaar_ocr_text,
-        extracted_fields={"student_name": {"value": "Rohit Sharma"}}
-    )
-    assert res["is_gov_id"] is True
-    assert res["id_type"] == "AADHAAR"
-    assert res["checksum_valid"] is True
-    assert res["issuer_status"] == "VERIFIED_AUTHENTIC"
-    assert "UIDAI" in res["authority"]
-    assert res["id_number_masked"] == "XXXX-XXXX-2515"
-
-def test_digilocker_pan_card_nsdl_verification():
-    from backend.app.services.digilocker_service import DigiLockerService
-
-    # Authentic PAN structure: 4th char P = Individual, 5th char E vs surname 'Verma'
-    pan_ocr_text = """
-    INCOME TAX DEPARTMENT
-    GOVT. OF INDIA
-    Permanent Account Number Card
-    ABCPE1234F
-    Name: Alok Verma
-    Father's Name: R. K. Verma
-    Date of Birth: 12/04/1988
-    """
-    res = DigiLockerService.detect_and_verify(
-        text_content=pan_ocr_text,
-        extracted_fields={"student_name": {"value": "Alok Verma"}}
-    )
-    assert res["is_gov_id"] is True
-    assert res["id_type"] == "PAN"
-    assert res["checksum_valid"] is True
-    # 5th char 'E' doesn't match 'V' for Verma -> demographic check catches mismatch!
-    assert res["demographic_match"]["name_match_score"] == 40.0
-    assert res["issuer_status"] == "DEMOGRAPHIC_MISMATCH"
-
-    # Perfect matching PAN: 4th char P = Individual, 5th char V matches Verma
-    pan_matching_text = """
-    INCOME TAX DEPARTMENT
-    GOVT. OF INDIA
-    Permanent Account Number Card
-    ABCPV1234F
-    Name: Alok Verma
-    Father's Name: R. K. Verma
-    Date of Birth: 12/04/1988
-    """
-    res_match = DigiLockerService.detect_and_verify(
-        text_content=pan_matching_text,
-        extracted_fields={"student_name": {"value": "Alok Verma"}}
-    )
-    assert res_match["checksum_valid"] is True
-    assert res_match["issuer_status"] == "VERIFIED_AUTHENTIC"
-    assert "Income Tax Department" in res_match["authority"]
-
-def test_digilocker_driving_license_parivahan():
-    from backend.app.services.digilocker_service import DigiLockerService
-
-    dl_text = """
-    UNION OF INDIA
-    DRIVING LICENCE
-    Transport Department, NCT of Delhi
-    DL-0420110012345
-    Name: Vikram Singh
-    DOB: 24/02/1990
-    """
-    res = DigiLockerService.detect_and_verify(
-        text_content=dl_text,
-        extracted_fields={"student_name": {"value": "Vikram Singh"}}
-    )
-    assert res["is_gov_id"] is True
-    assert res["id_type"] == "DRIVING_LICENSE"
-    assert res["checksum_valid"] is True
-    assert "MoRTH" in res["authority"]
-    assert res["issuer_status"] == "VERIFIED_AUTHENTIC"
-

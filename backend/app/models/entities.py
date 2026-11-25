@@ -149,8 +149,7 @@ class VerificationResult(Base):
     risk_level = Column(String(50), default="INCONCLUSIVE", nullable=False)  # LOW_RISK, MEDIUM_RISK, HIGH_RISK, INCONCLUSIVE
     risk_score = Column(Float, default=0.0, nullable=False)  # 0.0 to 100.0
     summary_evidence = Column(JSON, default=list)
-    issuer_verification_status = Column(String(512), default="Issuer verification unavailable (Not configured)", nullable=False)
-    issuer_metadata = Column(JSON, default=dict)
+    issuer_verification_status = Column(String(100), default="Issuer verification unavailable (Not configured)", nullable=False)
     recommendation = Column(Text, default="Human review recommended.")
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 

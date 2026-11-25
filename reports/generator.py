@@ -22,8 +22,7 @@ class VerificationReportGenerator:
         verification_result: Dict[str, Any],
         extracted_fields: List[Dict[str, Any]],
         forensic_findings: List[Dict[str, Any]],
-        ml_prediction: Optional[Dict[str, Any]] = None,
-        issuer_metadata: Optional[Dict[str, Any]] = None
+        ml_prediction: Optional[Dict[str, Any]] = None
     ) -> str:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         doc = SimpleDocTemplate(
@@ -201,50 +200,8 @@ class VerificationReportGenerator:
         elements.append(t_forensics)
         elements.append(Spacer(1, 14))
 
-        # Government ID and DigiLocker Verification Section (if applicable)
-        if issuer_metadata and issuer_metadata.get("is_gov_id"):
-            elements.append(Paragraph("3. Government Issuer & DigiLocker Verification", section_style))
-            gov_data = [
-                [
-                    Paragraph("<b>Document Classification</b>", body_style),
-                    Paragraph(issuer_metadata.get("id_type_label", "Government Issued ID"), body_style),
-                    Paragraph("<b>Verified ID Number</b>", body_style),
-                    Paragraph(f"<b>{issuer_metadata.get('id_number_masked', 'N/A')}</b>", body_style)
-                ],
-                [
-                    Paragraph("<b>Issuing Authority</b>", body_style),
-                    Paragraph(issuer_metadata.get("authority", "Official Issuer"), body_style),
-                    Paragraph("<b>Algorithm Checksum</b>", body_style),
-                    Paragraph(f"<font color='{'#15803D' if issuer_metadata.get('checksum_valid') else '#B91C1C'}'><b>{'VALID (Passed)' if issuer_metadata.get('checksum_valid') else 'FAILED'}</b></font>", body_style)
-                ],
-                [
-                    Paragraph("<b>DigiLocker Transaction ID</b>", body_style),
-                    Paragraph(f"<font size=7>{issuer_metadata.get('transaction_id', 'N/A')}</font>", body_style),
-                    Paragraph("<b>Verification Timestamp</b>", body_style),
-                    Paragraph(issuer_metadata.get("timestamp", "N/A"), body_style)
-                ],
-                [
-                    Paragraph("<b>Demographic Match</b>", body_style),
-                    Paragraph(f"{issuer_metadata.get('demographic_match', {}).get('details', 'Evaluated')}", body_style),
-                    Paragraph("<b>Issuer Status</b>", body_style),
-                    Paragraph(f"<b>{issuer_metadata.get('status_text', 'Verified')}</b>", body_style)
-                ]
-            ]
-            t_gov = Table(gov_data, colWidths=[1.6*inch, 2.0*inch, 1.4*inch, 2.0*inch])
-            t_gov.setStyle(TableStyle([
-                ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F0FDF4" if issuer_metadata.get("checksum_valid") else "#FEF2F2")),
-                ('BOX', (0,0), (-1,-1), 1, colors.HexColor("#86EFAC" if issuer_metadata.get("checksum_valid") else "#FCA5A5")),
-                ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor("#DCFCE7" if issuer_metadata.get("checksum_valid") else "#FEE2E2")),
-                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-                ('TOPPADDING', (0,0), (-1,-1), 5),
-                ('BOTTOMPADDING', (0,0), (-1,-1), 5),
-            ]))
-            elements.append(t_gov)
-            elements.append(Spacer(1, 14))
-
-        # ML and Decision Section
-        section_num = "4" if (issuer_metadata and issuer_metadata.get("is_gov_id")) else "3"
-        elements.append(Paragraph(f"{section_num}. Machine Learning & Decision Audit", section_style))
+        # ML and Issuer Verification Section
+        elements.append(Paragraph("3. Machine Learning & External Issuer Assessment", section_style))
         ml_data = []
         if ml_prediction and ml_prediction.get("is_available"):
             ml_data.append([

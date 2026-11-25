@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Shield, User, Lock, Database, Info, HardDrive, CheckCircle2, Landmark, Check } from 'lucide-react';
+import { Shield, User, Lock, Database, Info, HardDrive, CheckCircle2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { User as UserType } from '@/types';
 import { AuthGuard } from '@/components/AuthGuard';
@@ -100,49 +100,8 @@ export default function SettingsPage() {
           </div>
           <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
             <span className="text-slate-400 block font-medium">Government Issuer API</span>
-            <span className="font-semibold text-emerald-700 mt-1 block">DigiLocker Certified Gateway (Active)</span>
+            <span className="font-semibold text-amber-700 mt-1 block">DigiLocker / NAD: Not Configured (Inactive)</span>
           </div>
-        </div>
-      </div>
-
-      {/* DigiLocker & Government Identity Configuration */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Landmark className="w-4 h-4 text-emerald-600" />
-            DigiLocker National Identity Repository Integration
-          </h2>
-          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200">
-            <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Gateway Online
-          </span>
-        </div>
-
-        <p className="text-xs text-slate-600 leading-relaxed">
-          DocShield AI connects to the DigiLocker National Gateway to verify government-issued credentials against statutory repositories. Supported registries:
-        </p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-          <div className="p-3 rounded-lg border border-slate-100 bg-slate-50">
-            <span className="font-bold text-slate-800 block">Unique Identification Authority of India (UIDAI)</span>
-            <span className="text-[11px] text-slate-500 mt-0.5 block">Aadhaar Card (12-digit Verhoeff Dihedral D5 check digit algorithm)</span>
-          </div>
-          <div className="p-3 rounded-lg border border-slate-100 bg-slate-50">
-            <span className="font-bold text-slate-800 block">Income Tax Department (ITD / NSDL)</span>
-            <span className="text-[11px] text-slate-500 mt-0.5 block">Permanent Account Number (PAN) 10-char entity & surname validation</span>
-          </div>
-          <div className="p-3 rounded-lg border border-slate-100 bg-slate-50">
-            <span className="font-bold text-slate-800 block">Ministry of Road Transport & Highways (MoRTH)</span>
-            <span className="text-[11px] text-slate-500 mt-0.5 block">Parivahan Sarathi Driving License (State code + RTO + issue year)</span>
-          </div>
-          <div className="p-3 rounded-lg border border-slate-100 bg-slate-50">
-            <span className="font-bold text-slate-800 block">Election Commission & MEA Passport</span>
-            <span className="text-[11px] text-slate-500 mt-0.5 block">Voter ID (EPIC standard) and Passport ICAO Doc 9303 MRZ verification</span>
-          </div>
-        </div>
-
-        <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-500 gap-2">
-          <span>Verification Gateway: <strong className="text-slate-700">api.digitallocker.gov.in / Sandbox Compliant</strong></span>
-          <span>Demographic Matching: <strong className="text-emerald-700">Automated OCR Cross-Reference</strong></span>
         </div>
       </div>
 

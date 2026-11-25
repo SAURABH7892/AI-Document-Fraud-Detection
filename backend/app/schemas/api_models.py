@@ -88,7 +88,6 @@ class VerificationDetailResponse(BaseModel):
     forensics: List[ForensicFindingResponse]
     ml_prediction: Optional[ModelPredictionResponse] = None
     report_id: Optional[str] = None
-    issuer_metadata: Optional[Dict[str, Any]] = None
 
 # Job Status Schema
 class JobStatusResponse(BaseModel):
