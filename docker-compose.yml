@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: docshield-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: docshield
+      POSTGRES_PASSWORD: docshield_secure_password
+      POSTGRES_DB: docshield_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U docshield -d docshield_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: docshield-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: docshield-backend
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgresql://docshield:docshield_secure_password@db:5432/docshield_db
+      REDIS_URL: redis://redis:6379/0
+      WORKER_MODE: celery
+      STORAGE_TYPE: local
+      STORAGE_LOCAL_PATH: /app/storage
+      SECRET_KEY: docshield-production-super-secret-key-replace-me
+      CORS_ORIGINS: '["http://localhost:3000"]'
+    ports:
+      - "8000:8000"
+    volumes:
+      - storage_data:/app/storage
+      - ./ai/artifacts:/app/ai/artifacts
+
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: docshield-celery-worker
+    command: celery -A backend.app.workers.celery_app worker --loglevel=info --concurrency=2
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgresql://docshield:docshield_secure_password@db:5432/docshield_db
+      REDIS_URL: redis://redis:6379/0
+      WORKER_MODE: celery
+      STORAGE_TYPE: local
+      STORAGE_LOCAL_PATH: /app/storage
+      SECRET_KEY: docshield-production-super-secret-key-replace-me
+    volumes:
+      - storage_data:/app/storage
+      - ./ai/artifacts:/app/ai/artifacts
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: docshield-frontend
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data:
+  redis_data:
+  storage_data:
